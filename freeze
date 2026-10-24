@@ -1,0 +1,45 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local event = Instance.new("RemoteEvent")
+event.Name = "FreezePlayerEvent"
+event.Parent = ReplicatedStorage
+
+local frozen = {}
+
+event.OnServerEvent:Connect(function(requester, targetUserId, freeze)
+    if typeof(targetUserId) ~= "number" or typeof(freeze) ~= "boolean" then
+        return
+    end
+
+    local target = Players:GetPlayerByUserId(targetUserId)
+    if not target or target == requester then
+        return
+    end
+
+    local character = target.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    if freeze then
+        if not frozen[target] then
+            frozen[target] = {
+                WalkSpeed = humanoid.WalkSpeed,
+                JumpPower = humanoid.JumpPower,
+                AutoRotate = humanoid.AutoRotate
+            }
+        end
+
+        humanoid.WalkSpeed = 0
+        humanoid.JumpPower = 0
+        humanoid.AutoRotate = false
+    else
+        local old = frozen[target]
+        if old then
+            humanoid.WalkSpeed = old.WalkSpeed
+            humanoid.JumpPower = old.JumpPower
+            humanoid.AutoRotate = old.AutoRotate
+            frozen[target] = nil
+        end
+    end
+end)
